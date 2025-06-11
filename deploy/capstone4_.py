@@ -61,11 +61,16 @@ if uploaded_file:
         df[col] = le.fit_transform(df[col])
 
     # SMOTE
+    from sklearn.preprocessing import LabelEncoder
     X = df.drop('NObeyesdad', axis=1)
     y = df['NObeyesdad']
+    # Pastikan y numerik
+    le_y = LabelEncoder()
+    y = le_y.fit_transform(y)
+    # SMOTE
     sm = SMOTE(random_state=42)
     X_res, y_res = sm.fit_resample(X, y)
-
+    
     # Skala data
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X_res)
