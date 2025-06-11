@@ -374,4 +374,4 @@ plt.bar(["Sebelum Tuning", "Sesudah Tuning"], [acc_before, acc_after], color=["o
 plt.ylabel("Akurasi")
 plt.title("Perbandingan Akurasi Model")
 plt.ylim(0, 1)
-plt.show()e3433333r
+plt.show()
