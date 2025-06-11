@@ -60,16 +60,22 @@ if uploaded_file:
     for col in kategorikal_cols + biner_cols:
         df[col] = le.fit_transform(df[col])
 
-    # SMOTE
     from sklearn.preprocessing import LabelEncoder
+    from imblearn.over_sampling import SMOTE
+    
+    # Pisahkan fitur dan target
     X = df.drop('NObeyesdad', axis=1)
     y = df['NObeyesdad']
-    # Pastikan y numerik
-    le_y = LabelEncoder()
-    y = le_y.fit_transform(y)
-    # SMOTE
+    
+    # Konversi y (label target) ke angka jika belum
+    if y.dtype == 'object' or str(y.dtype) == 'category':
+        le_y = LabelEncoder()
+        y = le_y.fit_transform(y)
+    
+    # SMOTE hanya bisa jalan kalau y numerik
     sm = SMOTE(random_state=42)
     X_res, y_res = sm.fit_resample(X, y)
+
     
     # Skala data
     scaler = StandardScaler()
