@@ -14,6 +14,14 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from imblearn.over_sampling import SMOTE
 
+import sklearn
+import imblearn
+import streamlit as st
+
+st.write("scikit-learn version:", sklearn.__version__)
+st.write("imblearn version:", imblearn.__version__)
+
+
 st.set_page_config(page_title="Prediksi Obesitas", layout="wide")
 st.title(" Prediksi Kategori Obesitas Berdasarkan Data Gaya Hidup")
 
