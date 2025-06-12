@@ -1,6 +1,6 @@
 
 # capstone4_streamlit.py
-
+pip install streamlit
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -16,14 +16,14 @@ from sklearn.neighbors import KNeighborsClassifier
 from imblearn.over_sampling import SMOTE
 
 st.set_page_config(page_title="Prediksi Obesitas", layout="wide")
-st.title("📊 Prediksi Kategori Obesitas Berdasarkan Data Gaya Hidup")
+st.title(" Prediksi Kategori Obesitas Berdasarkan Data Gaya Hidup")
 
 # === 1. Load Dataset ===
 uploaded_file = st.file_uploader("Upload file CSV", type="csv")
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
 
-    st.subheader("📄 Dataset Awal")
+    st.subheader(" Dataset Awal")
     st.dataframe(df.head())
 
     # Konversi tipe data
@@ -40,7 +40,7 @@ if uploaded_file:
         df[col] = df[col].astype('category')
 
     # Visualisasi kelas
-    st.subheader("🔍 Distribusi Kelas Obesitas")
+    st.subheader(" Distribusi Kelas Obesitas")
     fig1, ax1 = plt.subplots()
     sns.countplot(data=df, x='NObeyesdad', order=df['NObeyesdad'].value_counts().index, ax=ax1)
     plt.xticks(rotation=45)
@@ -85,7 +85,7 @@ if uploaded_file:
     X_train, X_test, y_train, y_test = train_test_split(X_scaled, y_res, test_size=0.2, random_state=42)
 
     # Model
-    st.subheader("🧠 Training dan Evaluasi Model")
+    st.subheader(" Training dan Evaluasi Model")
     models = {
         "Decision Tree": DecisionTreeClassifier(random_state=42, max_depth=5),
         "Random Forest": RandomForestClassifier(random_state=42),
