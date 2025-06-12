@@ -81,7 +81,9 @@ if uploaded_file:
     
     # SMOTE hanya bisa jalan kalau y numerik
     sm = SMOTE(random_state=42)
-    X_res, y_res = sm.fit_resample(X, y)
+    # X_res, y_res = sm.fit_resample(X, y)
+    X_res, y_res = X, y
+
 
     
     # Skala data
