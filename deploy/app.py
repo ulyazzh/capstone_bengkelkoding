@@ -1,0 +1,547 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
+#import library
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+from sklearn.preprocessing import LabelEncoder
+from sklearn.impute import SimpleImputer
+
+
+# In[2]:
+
+
+#membaca dataset
+df = pd.read_csv('/content/ObesityDataSet.csv')
+
+
+# In[3]:
+
+
+#menampilkan dataset
+df.head()
+
+
+# In[4]:
+
+
+# Menampilkan info dataset
+df.info()
+
+
+# In[5]:
+
+
+# Ubah ke tipe data numerik
+
+# Kolom kontinu (float)
+kontinu_cols = ['Age', 'Height', 'Weight', 'NCP', 'CH2O', 'FAF']
+for col in kontinu_cols:
+    df[col] = pd.to_numeric(df[col], errors='coerce')  # ubah ke float, error jadi NaN
+
+# Kolom integer
+integer_cols = ['FCVC', 'TUE']
+for col in integer_cols:
+    df[col] = pd.to_numeric(df[col], downcast='integer', errors='coerce')
+
+# Kolom biner (yes/no) atau 1/0 tetap object/categorical, bisa di-encode nanti
+biner_cols = ['family_history_with_overweight', 'FAVC', 'SMOKE', 'SCC']
+
+# Kolom kategorikal
+#kategorikal_cols = ['Gender', 'CAEC', 'CALC', 'MTRANS', 'NObeyesdad']
+
+# memastikan kolom kategorikal ditandai sebagai kategori
+#for col in kategorikal_cols + biner_cols:
+#    df[col] = df[col].astype('category')
+
+# Tampilkan kembali info setelah perubahan
+df.info()
+
+
+# In[6]:
+
+
+# menampilkan jumlah baris dan kolom
+df.shape
+
+
+# In[7]:
+
+
+# deskripsi data
+df.describe()
+
+
+# In[8]:
+
+
+#menampilkan visualisasi distribusi kelas obesitas
+plt.figure(figsize=(10,5))
+sns.countplot(data=df, x='NObeyesdad', order=df['NObeyesdad'].value_counts().index)
+plt.title("Distribusi Kelas Obesitas")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+
+# In[9]:
+
+
+#menampilkan distribusi usia
+plt.figure(figsize=(8,5))
+sns.histplot(df['Age'], kde=True, bins=30)
+plt.title("Distribusi Usia")
+plt.xlabel("Usia")
+plt.ylabel("Jumlah")
+plt.show()
+
+
+# In[10]:
+
+
+# Visualisasi gender vs tingkat obesitas
+plt.figure(figsize=(8, 5))
+sns.countplot(x='Gender', hue='NObeyesdad', data=df)
+plt.title("Distribusi Obesitas berdasarkan Gender")
+plt.show()
+
+
+# In[11]:
+
+
+#cek missing value
+df.isnull().sum()
+
+
+# In[12]:
+
+
+df[df.isnull().any(axis=1)]
+
+
+# In[13]:
+
+
+# Pisahkan kolom berdasarkan tipe
+num_cols = ['Age', 'Height', 'Weight', 'NCP', 'CH2O', 'FAF']
+int_cols = ['FCVC', 'TUE']
+cat_cols = ['Gender', 'CAEC', 'CALC', 'MTRANS', 'NObeyesdad']
+bin_cols = ['family_history_with_overweight', 'FAVC', 'SMOKE', 'SCC']
+
+
+# In[14]:
+
+
+# Imputasi nilai numerik kontinu dengan median
+imputer_num = SimpleImputer(strategy='median')
+df[num_cols] = imputer_num.fit_transform(df[num_cols])
+
+
+# In[15]:
+
+
+# Imputasi nilai integer dengan modus
+imputer_int = SimpleImputer(strategy='most_frequent')
+df[int_cols] = imputer_int.fit_transform(df[int_cols])
+
+
+# In[16]:
+
+
+# Imputasi nilai kategorikal dan biner dengan modus
+for col in cat_cols + bin_cols:
+    imputer_cat = SimpleImputer(strategy='most_frequent')
+    df[[col]] = imputer_cat.fit_transform(df[[col]])
+
+
+# In[17]:
+
+
+df.isnull().sum()
+
+
+# karena missing value sudah teratasi, jumlah data tiap kolom sudah sama semua
+
+# In[18]:
+
+
+#mengecek data duplikat
+print(df.duplicated().sum())
+
+
+# In[19]:
+
+
+#hapus data duplikay
+df.drop_duplicates(inplace=True)
+
+#cek ulang data duplikat
+print(df.duplicated().sum())
+
+
+# In[20]:
+
+
+#Cek keseimbangan data (distribusi label target)
+(df['NObeyesdad'].value_counts())
+
+
+# In[21]:
+
+
+#deteksi outlier dengan boxplot
+numeric_cols = ['Age', 'Weight', 'Height', 'FAF', 'TUE', 'CH2O', 'NCP', 'FCVC']
+
+plt.figure(figsize=(16, 12))
+for i, col in enumerate(numeric_cols):
+    plt.subplot(3, 3, i+1)
+    sns.boxplot(x=df[col])
+    plt.title(f"Boxplot {col}")
+    plt.tight_layout()
+
+plt.show()
+
+
+# In[22]:
+
+
+#ubah data kategori ke numerik
+from sklearn.preprocessing import LabelEncoder
+
+label_enc = LabelEncoder()
+categorical_cols = ['Gender', 'CAEC', 'CALC', 'MTRANS', 'NObeyesdad']
+for col in categorical_cols:
+    df[col] = label_enc.fit_transform(df[col])
+
+
+# In[23]:
+
+
+#buang kolom yang redundan/tidak variatif
+X = df.drop('NObeyesdad', axis=1)  # Fitur
+y = df['NObeyesdad']               # Target
+
+
+# In[24]:
+
+
+#menangani outliers dengan
+for col in numeric_cols:
+  Q1 = df[col].quantile(0.25)
+  Q3 = df[col].quantile(0.75)
+  IQR = Q3 - Q1
+  lower_bound = Q1 - 1.5 * IQR
+  upper_bound = Q3 + 1.5 * IQR
+  df[col] = np.where(df[col] < lower_bound, lower_bound, df[col])
+  df[col] = np.where(df[col] > upper_bound, upper_bound, df[col])
+
+
+# In[29]:
+
+
+from sklearn.preprocessing import LabelEncoder
+from imblearn.over_sampling import SMOTE
+
+# Salin dataset
+df_encoded = df.copy()
+
+# Label Encoding kolom kategorikal
+label_cols = ['Gender', 'family_history_with_overweight', 'FAVC', 'CAEC',
+              'SMOKE', 'SCC', 'CALC', 'MTRANS']
+
+le = LabelEncoder()
+for col in label_cols:
+    df_encoded[col] = le.fit_transform(df_encoded[col])
+
+# Label Encoding target
+le_target = LabelEncoder()
+df_encoded['NObeyesdad'] = le_target.fit_transform(df_encoded['NObeyesdad'])
+
+# Pisahkan fitur dan target
+X = df_encoded.drop('NObeyesdad', axis=1)
+y = df_encoded['NObeyesdad']
+
+# Jalankan SMOTE
+sm = SMOTE(random_state=42)
+X_res, y_res = sm.fit_resample(X, y)
+
+
+# In[30]:
+
+
+#atasi ketidakseimbangan kelas data
+from imblearn.over_sampling import SMOTE
+
+sm = SMOTE(random_state=42)
+X_res, y_res = sm.fit_resample(X, y)
+
+# Cek distribusi baru
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 4))
+sns.countplot(x=y_res)
+plt.title("Distribusi Target Setelah SMOTE")
+plt.xticks(rotation=45)
+plt.show()
+
+
+# In[31]:
+
+
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X_res)
+
+
+# **Kesimpulan Preprocessing**
+# 
+# - Dataset awal memiliki missing values dan duplikasi, telah dibersihkan.
+# - Kolom kategorikal telah diencoding menggunakan LabelEncoder.
+# - Ketidakseimbangan kelas berhasil diatasi dengan SMOTE.
+# - Dataset telah dinormalisasi menggunakan StandardScaler agar siap untuk pemodelan.
+# 
+
+# ## **PEMODELAN**
+
+# In[32]:
+
+
+# Import library klasifikasi dan evaluasi
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+# In[33]:
+
+
+# Inisialisasi model
+models = {
+    "Decision Tree": DecisionTreeClassifier(random_state=42, max_depth=5, min_samples_split=10, min_samples_leaf=5),
+    "Random Forest": RandomForestClassifier(random_state=42),
+    "KNN": KNeighborsClassifier(n_neighbors=10)
+}
+
+
+# In[34]:
+
+
+# Pisahkan fitur dan label
+X = df.drop('NObeyesdad', axis=1)
+y = df['NObeyesdad']
+
+
+# In[35]:
+
+
+from sklearn.preprocessing import LabelEncoder
+
+le = LabelEncoder()
+for col in X.columns:
+    if X[col].dtype == 'object':
+        X[col] = le.fit_transform(X[col])
+
+# Encode target label juga jika masih string
+if y.dtype == 'object':
+    y = le.fit_transform(y)
+
+
+# In[36]:
+
+
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+
+# In[37]:
+
+
+# Dictionary untuk menyimpan hasil evaluasi
+results = {
+    "Model": [],
+    "Akurasi": [],
+    "Presisi": [],
+    "Recall": [],
+    "F1-Score": []
+}
+
+
+# In[38]:
+
+
+# Melatih dan mengevaluasi masing-masing model
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+
+    # Evaluasi metrik
+    acc = accuracy_score(y_test, y_pred)
+    prec = precision_score(y_test, y_pred, average='macro', zero_division=0)
+    rec = recall_score(y_test, y_pred, average='macro', zero_division=0)
+    f1 = f1_score(y_test, y_pred, average='macro', zero_division=0)
+
+    results["Model"].append(name)
+    results["Akurasi"].append(acc)
+    results["Presisi"].append(prec)
+    results["Recall"].append(rec)
+    results["F1-Score"].append(f1)
+
+    print(f"=== {name} ===")
+    print(classification_report(y_test, y_pred, zero_division=0))
+
+    # Misalnya setelah model.fit(X_train, y_train)
+    y_train_pred = model.predict(X_train)
+    train_acc = accuracy_score(y_train, y_train_pred)
+    test_acc = accuracy_score(y_test, y_pred)
+    print(f"Akurasi Training: {train_acc:.2f}")
+    print(f"Akurasi Testing: {test_acc:.2f}")
+
+
+        # Confusion Matrix
+    cm = confusion_matrix(y_test, y_pred)
+    plt.figure(figsize=(4, 3))
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+    plt.title(f'Confusion Matrix - {name}')
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.show()
+
+
+# In[39]:
+
+
+# Membuat DataFrame dari hasil evaluasi
+results_df = pd.DataFrame(results)
+
+
+# In[40]:
+
+
+# Visualisasi perbandingan performa
+plt.figure(figsize=(10, 6))
+sns.barplot(x="Model", y="value", hue="variable",
+            data=pd.melt(results_df, id_vars=["Model"]),
+            palette="Set2")
+plt.title("Perbandingan Performa Antar Model")
+plt.ylabel("Skor")
+plt.ylim(0, 1)
+plt.legend(title="Metrik")
+plt.show()
+
+
+# Berdasarkan hasil evaluasi, dapat dilihat bahwa setiap algoritma memiliki keunggulan masing-masing diantaranya sebagai berikut
+# 
+# - **Random Forest** menunjukkan performa paling stabil dengan skor F1 yang tinggi, menunjukkan kemampuannya dalam mengatasi overfitting dan memberikan prediksi yang seimbang.
+# - **Decision Tree**. Di percobaan awal, algoritma ini sempat mengalami overfitting. Tapi setelah menggunakan pruning, performa model jadi lebih stabil.
+# - **KNN** memiliki performa yang baik tergantung pada pemilihan nilai k dan skala data.
+# Pada nilai k = 5, model KNN menunjukkan akurasi training sebesar 0.89 dan akurasi testing sebesar 0.84. Saat nilai k diubah menjadi 10, akurasi training menurun menjadi 0.84, dan akurasi testing menjadi 0.81. k = 5 memberikan akurasi lebih tinggi namun memiliki selisih antara training dan testing sebesar 0.05 yang menunjukkan indikasi overfitting ringan.
+# sedangkan k = 10 menunjukkan performa yang lebih stabil dan general, dengan selisih akurasi hanya 0.03, menandakan bahwa model lebih mampu melakukan generalisasi terhadap data baru.
+# 
+# 
+
+# ## **Hyperparameter Tuning**
+
+# In[41]:
+
+
+from sklearn.model_selection import RandomizedSearchCV
+
+
+# In[42]:
+
+
+# One-hot encoding jika belum dilakukan
+X = pd.get_dummies(X, drop_first=True)
+
+
+# In[43]:
+
+
+param_dist = {
+    'n_estimators': [100, 200, 300, 400, 500],
+    'max_depth': [10, 20, 30, None],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 4],
+    'bootstrap': [True, False]
+}
+
+rf = RandomForestClassifier(random_state=42)
+
+random_search = RandomizedSearchCV(estimator=rf, param_distributions=param_dist,
+                                   n_iter=20, cv=3, verbose=2, random_state=42, n_jobs=-1)
+
+random_search.fit(X_train, y_train)
+
+print("Best Parameters:", random_search.best_params_)
+
+
+# In[44]:
+
+
+# Model terbaik dari hasil tuning
+best_rf = random_search.best_estimator_
+
+# Prediksi sebelum tuning (jika ada model awal)
+# rf_base = RandomForestClassifier(random_state=42)
+# rf_base.fit(X_train, y_train)
+# y_pred_base = rf_base.predict(X_test)
+
+# Prediksi sesudah tuning
+y_pred_tuned = best_rf.predict(X_test)
+
+# Evaluasi performa
+print("Akurasi Setelah Tuning:", accuracy_score(y_test, y_pred_tuned))
+print("\nClassification Report:\n", classification_report(y_test, y_pred_tuned))
+
+# Confusion Matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(confusion_matrix(y_test, y_pred_tuned), annot=True, fmt='d', cmap='Blues')
+plt.title("Confusion Matrix Setelah Tuning")
+plt.xlabel("Predicted")
+plt.ylabel("True")
+plt.show()
+
+
+# In[45]:
+
+
+# Model sebelum tuning
+rf_base = RandomForestClassifier(random_state=42)
+rf_base.fit(X_train, y_train)
+
+# Prediksi sebelum tuning
+y_pred_base = rf_base.predict(X_test)
+
+# Akurasi sebelum tuning
+acc_before = accuracy_score(y_test, y_pred_base)
+print("Akurasi Sebelum Tuning:", acc_before)
+
+
+# In[46]:
+
+
+# Akurasi setelah tuning (sudah dihitung sebelumnya)
+acc_after = accuracy_score(y_test, y_pred_tuned)
+
+# Visualisasi perbandingan
+plt.bar(["Sebelum Tuning", "Sesudah Tuning"], [acc_before, acc_after], color=["orange", "green"])
+plt.ylabel("Akurasi")
+plt.title("Perbandingan Akurasi Model")
+plt.ylim(0, 1)
+plt.show()
+
+
+# Setelah tuning, akurasi sedikit meningkat dari 94,99% menjadi 95,23%. kemungkinan model sudah cukup optimal sejak awal
