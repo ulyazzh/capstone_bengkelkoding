@@ -56,10 +56,13 @@ plt.xticks(rotation=45)
 st.pyplot(fig1)
 
 # Preprocessing pipeline
+num_imputer = SimpleImputer(strategy='median')
+int_imputer = SimpleImputer(strategy='most_frequent')
+
 preprocessor = ColumnTransformer(
     transformers=[
-        ('num', SimpleImputer(strategy='median'), kontinu_cols),
-        ('int', SimpleImputer(strategy='most_frequent'), integer_cols),
+        ('num', num_imputer, kontinu_cols),
+        ('int', int_imputer, integer_cols),
         ('cat', OneHotEncoder(handle_unknown='ignore'), kategorikal_cols),
         ('bin', OrdinalEncoder(), biner_cols),
     ])
@@ -76,9 +79,16 @@ y = le_y.fit_transform(y)
 X_train_raw, X_test_raw, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
 # Pipeline preprocessing
-scaler = StandardScaler()
 X_train_processed = preprocessor.fit_transform(X_train_raw)
 X_test_processed = preprocessor.transform(X_test_raw)
+
+# Validasi sebelum scaling
+if np.isnan(X_train_processed).any():
+    st.error("Data X_train_processed masih mengandung NaN!")
+    st.write("Jumlah NaN:", np.isnan(X_train_processed).sum())
+    st.stop()
+
+scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train_processed)
 X_test_scaled = scaler.transform(X_test_processed)
 
@@ -88,9 +98,6 @@ if np.isnan(X_train_scaled).any() or np.isinf(X_train_scaled).any():
     st.write("Jumlah NaN:", np.isnan(X_train_scaled).sum())
     st.write("Jumlah Inf:", np.isinf(X_train_scaled).sum())
     st.stop()
-
-# Tambahkan info debugging
-st.write("✅ X_train_scaled siap digunakan untuk SMOTE")
 
 # SMOTE
 sm = SMOTE(random_state=42)
