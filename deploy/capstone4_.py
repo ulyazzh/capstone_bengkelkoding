@@ -16,12 +16,14 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 
 from imblearn.over_sampling import SMOTE
 
+st.set_page_config(page_title="Prediksi Obesitas", layout="wide")
+
 # Informasi versi library
 st.write("scikit-learn version:", '1.5.0')
 st.write("imblearn version:", '0.13.1')
 
 # Konfigurasi halaman
-st.set_page_config(page_title="Prediksi Obesitas", layout="wide")
+
 st.title("🧠 Prediksi Kategori Obesitas Berdasarkan Data Gaya Hidup")
 
 # === 1. Upload Dataset ===
