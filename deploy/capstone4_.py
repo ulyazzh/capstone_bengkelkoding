@@ -24,26 +24,43 @@ if uploaded_file is None:
 # Baca dataset
 df = pd.read_csv(uploaded_file)
 
+# Cek kolom target
+target_col = 'NObeyesdad'
+if target_col not in df.columns:
+    st.error(f"Kolom target '{target_col}' tidak ditemukan!")
+    st.stop()
+
 # Daftar kolom
 kontinu_cols = ['Age', 'Height', 'Weight', 'NCP', 'CH2O', 'FAF']
 integer_cols = ['FCVC', 'TUE']
 biner_cols = ['family_history_with_overweight', 'FAVC', 'SMOKE', 'SCC']
 kategorikal_cols = ['Gender', 'CAEC', 'CALC', 'MTRANS']
-target_col = 'NObeyesdad'
 
 # === 2. Pembersihan Awal Dataset ===
 # Ganti karakter aneh menjadi NaN
-df.replace(['?', '', ' ', 'nan'], np.nan, inplace=True)
+df.replace(['?', '', ' ', 'nan', '??'], np.nan, inplace=True)
 
 # Pastikan semua kolom numerik benar-benar numerik
 for col in kontinu_cols:
     df[col] = pd.to_numeric(df[col], errors='coerce')
+
 for col in integer_cols:
     df[col] = pd.to_numeric(df[col], downcast='integer', errors='coerce')
 
 # Konversi tipe kategorikal
 for col in biner_cols + kategorikal_cols:
     df[col] = df[col].astype('category')
+
+# Tampilkan jumlah missing values setelah pembersihan awal
+st.write("Missing values setelah pembersihan awal:")
+st.write(df[kontinu_cols + integer_cols].isnull().sum())
+
+# Visualisasi distribusi target
+st.subheader("📊 Distribusi Kelas Obesitas")
+fig1, ax1 = plt.subplots(figsize=(8, 5))
+sns.countplot(data=df, x=target_col, order=df[target_col].value_counts().index, palette="viridis", ax=ax1)
+plt.xticks(rotation=45)
+st.pyplot(fig1)
 
 # Pisahkan fitur dan target
 X = df.drop(columns=[target_col])
@@ -57,13 +74,10 @@ y = le_y.fit_transform(y)
 X_train_raw, X_test_raw, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
 # Pipeline preprocessing
-num_imputer = SimpleImputer(strategy='median')
-int_imputer = SimpleImputer(strategy='most_frequent')
-
 preprocessor = ColumnTransformer(
     transformers=[
-        ('num', num_imputer, kontinu_cols),
-        ('int', int_imputer, integer_cols),
+        ('num', SimpleImputer(strategy='median'), kontinu_cols),
+        ('int', SimpleImputer(strategy='most_frequent'), integer_cols),
         ('cat', OneHotEncoder(handle_unknown='ignore'), kategorikal_cols),
         ('bin', OrdinalEncoder(), biner_cols),
     ])
@@ -74,7 +88,7 @@ X_test_processed = preprocessor.transform(X_test_raw)
 
 # Validasi hasil preprocessing
 if np.isnan(X_train_processed).any():
-    st.error("Masih ada nilai NaN di X_train_processed setelah preprocessing!")
+    st.error("❌ Masih ada nilai NaN di X_train_processed setelah preprocessing!")
     st.write("Contoh isi X_train_processed:")
     st.write(X_train_processed[:5])
     st.stop()
