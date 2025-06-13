@@ -88,9 +88,23 @@ X_test_processed = preprocessor.transform(X_test_raw)
 X_train_scaled = scaler.fit_transform(X_train_processed)
 X_test_scaled = scaler.transform(X_test_processed)
 
+
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+
+# Pastikan hasil adalah numpy array numerik
+print(type(X_train_scaled))
+print(np.isnan(X_train_scaled).any())   # Harus False
+print(np.isinf(X_train_scaled).any())    # Harus False
+
+
 # SMOTE
 sm = SMOTE(random_state=42)
 X_res, y_res = sm.fit_resample(X_train_scaled, y_train)
+
+
 
 # Tombol pelatihan model
 if st.button("🚀 Mulai Pelatihan Model"):
