@@ -4,25 +4,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Import library
+# Library untuk ML
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler, LabelEncoder
 from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+
+# Untuk SMOTE
 from imblearn.over_sampling import SMOTE
 
 # Konfigurasi halaman
 st.set_page_config(page_title="Prediksi Obesitas", layout="wide")
 st.title("🧠 Prediksi Kategori Obesitas Berdasarkan Data Gaya Hidup")
-
-# Informasi versi library
-st.write("scikit-learn version:", '1.5.0')
-st.write("imblearn version:", '0.13.1')
 
 # === 1. Upload Dataset ===
 uploaded_file = st.file_uploader("Upload file CSV", type="csv")
@@ -84,6 +81,16 @@ X_train_processed = preprocessor.fit_transform(X_train_raw)
 X_test_processed = preprocessor.transform(X_test_raw)
 X_train_scaled = scaler.fit_transform(X_train_processed)
 X_test_scaled = scaler.transform(X_test_processed)
+
+# Validasi input sebelum SMOTE
+if np.isnan(X_train_scaled).any() or np.isinf(X_train_scaled).any():
+    st.error("❌ Data X_train_scaled masih mengandung NaN atau Inf!")
+    st.write("Jumlah NaN:", np.isnan(X_train_scaled).sum())
+    st.write("Jumlah Inf:", np.isinf(X_train_scaled).sum())
+    st.stop()
+
+# Tambahkan info debugging
+st.write("✅ X_train_scaled siap digunakan untuk SMOTE")
 
 # SMOTE
 sm = SMOTE(random_state=42)
