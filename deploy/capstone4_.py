@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
-from sklearn.preprocessing import LabelEncoder
+# Import library
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler, LabelEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
@@ -14,18 +14,15 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-
 from imblearn.over_sampling import SMOTE
 
+# Konfigurasi halaman
 st.set_page_config(page_title="Prediksi Obesitas", layout="wide")
+st.title("🧠 Prediksi Kategori Obesitas Berdasarkan Data Gaya Hidup")
 
 # Informasi versi library
 st.write("scikit-learn version:", '1.5.0')
 st.write("imblearn version:", '0.13.1')
-
-# Konfigurasi halaman
-
-st.title("🧠 Prediksi Kategori Obesitas Berdasarkan Data Gaya Hidup")
 
 # === 1. Upload Dataset ===
 uploaded_file = st.file_uploader("Upload file CSV", type="csv")
@@ -88,23 +85,9 @@ X_test_processed = preprocessor.transform(X_test_raw)
 X_train_scaled = scaler.fit_transform(X_train_processed)
 X_test_scaled = scaler.transform(X_test_processed)
 
-
-from sklearn.preprocessing import StandardScaler
-
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-
-# Pastikan hasil adalah numpy array numerik
-print(type(X_train_scaled))
-print(np.isnan(X_train_scaled).any())   # Harus False
-print(np.isinf(X_train_scaled).any())    # Harus False
-
-
 # SMOTE
 sm = SMOTE(random_state=42)
 X_res, y_res = sm.fit_resample(X_train_scaled, y_train)
-
-
 
 # Tombol pelatihan model
 if st.button("🚀 Mulai Pelatihan Model"):
